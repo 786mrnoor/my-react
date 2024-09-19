@@ -1,6 +1,29 @@
 import state from "../global.js";
 import { diffFunctionComponent } from "../diff.js";
 
+let updateQueue = []
+function addToQueue(component) {
+    // if the component is not in update queue
+    if (!updateQueue.includes(component)) {
+        component.shouldUpdate = true;
+        updateQueue.push(component);
+    }
+}
+
+let timeoutId;
+function flushUpdates() {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+        updateQueue.sort((a, b) => a.depth - b.depth);
+        updateQueue.forEach((component) => {
+            if (component.shouldUpdate) {
+                diffFunctionComponent(component);
+            }
+        });
+        updateQueue = [];
+    }, 0);
+}
+
 export default function useState(initialState) {
     const { id, component } = state;
     const { cache } = component;
@@ -20,7 +43,9 @@ export default function useState(initialState) {
         } else {
             cache[id].value = state;
         }
-        diffFunctionComponent(component);
+        component.shouldUpdate = true;
+        addToQueue(component);
+        flushUpdates();
     }
 
     return [cache[id].value, setState];

@@ -16,6 +16,8 @@ export default function createElement(type, props, ...children) {
         component.cache = [];
         component.effects = [];
         component.component = null;
+        component.depth = null;
+        component.shouldUpdate = false;
     }
     return component;
 }

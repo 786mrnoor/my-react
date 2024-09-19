@@ -85,7 +85,9 @@ export default function diff(component, newComponent) {
 
         if (typeof component.type === 'function') {
             cleanup(component);
+            component.shouldUpdate = false;
             component.component.node.replaceWith(elem);
+
             return newComponent;
         }
         else {
@@ -95,14 +97,16 @@ export default function diff(component, newComponent) {
     }
 };
 
+
 export function diffFunctionComponent(functionComponent) {
     state.id = 0;
     state.effectId = 0;
+    state.depth = functionComponent.depth;
     state.component = functionComponent;
     let oldEffects = [...functionComponent.effects];
 
     const component = functionComponent.type(functionComponent.props);
-    diff(functionComponent.component, component);
+    functionComponent.component = diff(functionComponent.component, component);
 
     functionComponent.effects.forEach((effect, i) => {
         effect.cleanup = oldEffects[i].cleanup;
@@ -112,21 +116,31 @@ export function diffFunctionComponent(functionComponent) {
             effect.cleanup = effect.callback();
         }
     });
+
+    functionComponent.shouldUpdate = false;
+    state.depth = -1;
 }
 
 function diffAttributes(elem, prev, next) {
     for (let k in next) {
-        // if the attribute value is not same
-        if (next[k] !== prev[k]) {
-            if (k.startsWith('on')) {
-                let key = k.slice('2').toLowerCase();
-                elem.removeEventListener(key, prev[k]);
-                elem.addEventListener(key, next[k]);
-            }
-            else {
-                elem.setAttribute(k, next[k]);
-            }
-            prev[k] = next[k];
+        // if the attribute value is same then skip
+        if (next[k] === prev[k]) continue;
+
+        if (k.startsWith('on')) {
+            let key = k.slice('2').toLowerCase();
+            elem.removeEventListener(key, prev[k]);
+            elem.addEventListener(key, next[k]);
+        } else if (k === 'ref') {
+            if (typeof v === 'object') v.current = elem;
+            if (typeof v === 'function') v(elem);
+        } else if (k === 'checked') {
+            elem[k] = v;
+        } else if (k == 'style' && typeof value == 'object') {
+            Object.assign(elem.style, v);
         }
+        else {
+            elem.setAttribute(k, next[k]);
+        }
+        prev[k] = next[k];
     }
 }

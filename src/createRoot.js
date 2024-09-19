@@ -1,4 +1,5 @@
 import diff from "./diff.js";
+import state from "./global.js";
 import render from "./render.js";
 import cleanup from "./utils/cleanup.js";
 
@@ -10,10 +11,10 @@ export default function createRoot(root) {
                 component = diff(component, nextComponent);
             }
             else {
+                state.depth = -1;
                 const node = render(nextComponent);
                 root.appendChild(node);
                 component = nextComponent;
-                console.log(component);
             }
         },
         unmount() {

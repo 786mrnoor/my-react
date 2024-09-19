@@ -27,6 +27,8 @@ export default function render(component) {
 function renderFunction(functionComponent) {
     state.id = 0;
     state.effectId = 0;
+    state.depth += 1;
+    functionComponent.depth = state.depth;
     state.component = functionComponent;
 
     const component = functionComponent.type(functionComponent.props);
@@ -34,5 +36,6 @@ function renderFunction(functionComponent) {
     functionComponent.component = component;
 
     functionComponent.effects.forEach(e => e.cleanup = e.callback());
+    state.depth -= 1;
     return node;
 }

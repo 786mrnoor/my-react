@@ -7,7 +7,12 @@ export default function setProps(elem, props) {
         } else if (k === 'ref') {
             if (typeof v === 'object') v.current = elem;
             if (typeof v === 'function') v(elem);
-        } else {
+        } else if (k === 'checked') {
+            elem[k] = v;
+        } else if (k == 'style' && typeof v == 'object') {
+            Object.assign(elem.style, v);
+        }
+        else {
             elem.setAttribute(k, v);
         }
     }
